@@ -1,8 +1,8 @@
 def Text_Speed():
-    a = 0.007
+    a = 0.01
     return a
 
 def Difficulty():
-    b = 2
+    b = 1
     return b
 

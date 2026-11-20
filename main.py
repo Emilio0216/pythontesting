@@ -27,6 +27,10 @@ def Confirmation():
 def Clear_Terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def Ability(User, Text_Time):
+    if User == 1:
+        if Player.Ability == 1:
+            Parry = True
 
 def Turn_Order():
     Same = True
@@ -84,9 +88,44 @@ def Attack(Attacker, Text_Time):
         if Player_Effects.Advantage != 0:
             Player_Effects.Advantage_Duration -= 1
     if Attacker == 2:
-        Landed_Hit = Attack_Roll + Enemy.Damage_Bonus
-        if Landed_Hit >= Player.Defense/2:
-            Player.Health -= Landed_Hit/(Player.Defense/100 + 1)
+        #Seeing if the player has advantage or disadvantage
+        if Enemy_Effects.Advantage == 0:
+            Landed_Hit = Attack_Roll + Enemy.Damage_Bonus
+        elif Enemy_Effects.Advantage == 1:
+            if Attack_Roll > Advantage_Roll:
+                Landed_Hit = Attack_Roll + Enemy.Damage_Bonus
+            else:
+                Landed_Hit = Advantage_Roll + Enemy.Damage_Bonus
+        elif Enemy_Effects.Advantage == 2:
+            if Attack_Roll > Advantage_Roll:
+                Landed_Hit = Advantage_Roll + Enemy.Damage_Bonus
+            else:
+                Landed_Hit = Attack_Roll + Enemy.Damage_Bonus
+
+        #seeing if that attack was strong enough to break the Enemy's defense and if it was if the enemy dodged it with speed
+        if Landed_Hit > Player.Defense/2:
+            Dodge_Roll = random.randint(1,100)
+            Dodge_Chance = Player.Speed
+            if Dodge_Chance > 50:
+                Dodge_Chance = 50
+            if Dodge_Chance > Dodge_Roll:
+                Text_Scroll_Effect('You Dodged the attack', Text_Time)
+            else:
+                crit = random.randint(1,100)
+                Damage = int(round((Enemy.Damage * (Landed_Hit/100 + 1)) /(Player.Defense/100 + 1),0))
+                if crit <= Enemy.Crit_Chance:
+                    Text_Scroll_Effect('CRIT!',Text_Time)
+                    Damage *= 2
+                Player.Health -= Damage
+                if Player.Health < 0:
+                    Player.Health = 0
+
+                Text_Scroll_Effect(str(Enemy.Enemy_Type) + ' hit you for ' + str(Damage) + ' damage bringing your health down to ' + str(Player.Health), Text_Time)
+        else:
+            Text_Scroll_Effect('You blocked the attack', Text_Time)
+        
+        if Enemy_Effects.Advantage != 0:
+            Enemy_Effects.Advantage_Duration -= 1
 def Player_Turn(Text_Time):
     Confirm = False
     while Confirm == False:
@@ -114,7 +153,7 @@ def Player_Turn(Text_Time):
                     else:
                         Text_Scroll_Effect('You tried to cast fireball but you didnt have enough mana', Text_Time)
                 elif Spell_Choice == 2:
-                    if Player.Mana > 4:
+                    if Player.Mana >= 4:
                         Healing = int(round(Player.Max_Health/5 + Player.Max_Mana/4,0))
                         Player.Health += Healing
                         if Player.Health > Player.Max_Health:
@@ -128,18 +167,81 @@ def Player_Turn(Text_Time):
         elif Player_Choice == 3:
             Text_Scroll_Effect('It said Unfinished and you still thought it would work?', Text_Time)
         elif Player_Choice == 4:
-            Text_Scroll_Effect('This one is also unfinished sowwy :<', Text_Time)
-        print('')
+            if Player.Ability_On_CoolDown == 0:
+                Player.Ability_Active = True
+                Player.Ability_On_CoolDown = Player.Ability_CoolDown
+                Ability(1, Text_Time)
+            else:
+                Text_Scroll_Effect('Ability still on cooldown for ' + str(Player.Ability_On_CoolDown) + ' More turns',Text_Time)
+            Confirm = True
     Player.Mana += Player.Mana_Bonus
+    Player.Ability_On_CoolDown -= 1
     if Player.Mana > Player.Max_Mana:
         Player.Mana = Player.Max_Mana
+    if Player.Ability_On_CoolDown < 0:
+        Player.Ability_On_CoolDown = 0
+    Confirmation()
+
+
 def Enemy_Turn(Text_Time):
-    print('unfinished')
+    """
+    Mentality 1 is Agressive attacking unless healing is needed very minimal magic or buffs and no items just raw attacks
+    """
+    if Enemy.Mentality == 1:
+        Smart = random.randint(1,2)
+        if Smart == 1:
+            if Enemy.Health < Enemy.Max_Health/2 and Enemy.Mana >= 4:
+                Enemy_Choice = 2
+                Spell_Choice = 2
+            elif Enemy.Ability != 0 and Enemy.Ability_On_CoolDown == 0:
+                Enemy_Choice = 4
+            elif Enemy.Mana >= 5 and Enemy.Mana == Enemy.Max_Mana:
+                Enemy_Choice = 2
+                Spell_Choice = 1
+            else:
+                Enemy_Choice = 1
+        else:
+            Enemy_Choice = 1
+
+
+    if Enemy_Choice == 1:
+        Attack(2, Text_Time)
+    elif Enemy_Choice == 2:
+        if Spell_Choice == 1:
+            Magic_Damage = int(round((random.randint(1,50)/100 + 1) * Enemy.Max_Mana))
+            Enemy.Mana -= 5
+            Player.Health -= Magic_Damage
+            if Player.Health < 0:
+                Player.Health = 0
+            Text_Scroll_Effect(str(Enemy.Enemy_Type) + ' casts fireball dealing ' + str(Magic_Damage) + ' to you bringing your health down to ' + str(Player.Health), Text_Time)
+        elif Spell_Choice == 2:
+            Healing = int(round(Enemy.Max_Health/5 + Enemy.Max_Mana/4,0))
+            Enemy.Health += Healing
+            if Enemy.Health > Enemy.Max_Health:
+                Enemy.Health = Enemy.Max_Health
+            Enemy.Mana -= 4
+            Text_Scroll_Effect(str(Enemy.Enemy_Type) +' healed ' + str(Healing) + ' health bringing its health up to ' + str(Enemy.Health), Text_Time)
+
+        elif Enemy_Choice == 3:
+            Text_Scroll_Effect('It said Unfinished and you still thought it would work?', Text_Time)
+        elif Enemy_Choice == 4:
+            Enemy.Ability_Active = True
+            Enemy.Ability_On_CoolDown = Enemy.Ability_CoolDown
+            Ability(2, Text_Time)
+    Enemy.Mana += Enemy.Mana_Bonus
+    Enemy.Ability_On_CoolDown -= 1
+    if Enemy.Mana > Enemy.Max_Mana:
+        Enemy.Mana = Enemy.Max_Mana
+    if Enemy.Ability_On_CoolDown < 0:
+            Enemy.Ability_On_CoolDown = 0
+    Confirmation()
+
 def Combat_Normal(Text_Time):
-    Text_Scroll_Effect('You See a ' + Enemy.Enemy_Type + '!', Text_Time)
+    Text_Scroll_Effect('You See a ' + Enemy.Enemy_Type + '!\n', Text_Time)
     Combat = True
     while Combat == True and Enemy.Health > 0 and Player.Health > 0:
         Text_Scroll_Effect('Player Health = ' + str(Player.Health) + '/' + str(Player.Max_Health) + ' Enemy Health = '+ str(Enemy.Health) + '/' + str(Enemy.Max_Health),Text_Time)
+        Confirmation()
         Order = Turn_Order()
         if Order == 1:
             Player_Turn(Text_Time)
@@ -150,32 +252,108 @@ def Combat_Normal(Text_Time):
             if Player.Health > 0:
                 Player_Turn(Text_Time)
     if Player.Health > 0:
-        Text_Scroll_Effect('You gained ' + str(Enemy.Experience) + ' XP')
+        Text_Scroll_Effect('You gained ' + str(Enemy.Experience) + ' XP', Text_Time)
         Player.Experience += Enemy.Experience
         Level_Up = True
         while Level_Up == True:
-            if Player.Experience > Player.Level: 
-                Text_Scroll_Effect('You leveled up! you can now upgrade your stats',Text_Time)
-                Player.Experience -= Player.Level
-                Player.Level *= 1.4
-                Player.Level = int(round(Player.Level))
-                Experience_Points = 5
-                while Experience_Points > 0:
-                    Upgrade_Choice = Question(int, 'You have ' + str(Experience_Points) + ' XP left to spend\n1. Health\n2. Damage\n3. Hit Chance\n4. Crit Chance\n5. Defense\n6. Mana\n7. Mana regen\n8. Speed\n9. Active Ability', 'Invalid', Text_Time)
-                    Allowed = False
-                    if Upgrade_Choice == 1:
-                        while Allowed == False:
-                            Mass = Question(int, 'How many would you like to buy? 2 health per 1 XP spent', 'i hate you', Text_Time)
-                            if Experience_Points < Mass:
-                                Text_Scroll_Effect('You dont have enough XP', Text_Time)
-                            else:
-                                Prev_Health = Player.Max_Health
-                                Player.Max_Health += Mass*2
-                                Player.Health = int(round((Prev_Health/Player.Health) * Player.Max_Health))
-                                Allowed = True
+            if Player.Experience > Player.Level:
+                Multi_Level = True
+                Points_Gained = 0
+                while Player.Experience > Player.Level:
+                    Text_Scroll_Effect('You leveled up!',Text_Time)
+                    Player.Experience -= Player.Level
+                    Player.Level *= 1.2
+                    Player.Level = int(round(Player.Level))
+                    Points_Gained += 1
+                Text_Scroll_Effect('Next level costs ' + str(Player.Level) + ' Experience and you have ' + str(Player.Experience) + ' Experience leftover', Text_Time)
+                Player.Points += Points_Gained*5
             elif Player.Experience < Player.Level:
                 Level_Up = False
-                
+def Level_Up(Text_Time):
+    Investing = True
+    while Investing == True:
+        Upgrade_Choice = Question(int, 'You have ' + str(Player.Points) + ' XP left to spend\n1. Health\n2. Damage\n3. Hit Chance\n4. Crit Chance\n5. Defense\n6. Mana\n7. Mana regen\n8. Speed\n9. Save for later\nWhat would you like to spend your XP on?: ', 'Invalid', Text_Time)
+        Allowed = False
+        if Upgrade_Choice == 1:
+            while Allowed == False:
+                Mass = Question(int, '2 health per 1 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Prev_Health = Player.Max_Health
+                    Player.Max_Health += Mass*2
+                    Player.Health = int(round((Player.Health/Prev_Health) * Player.Max_Health))
+                    Allowed = True
+                    Player.Points -= Mass
+        elif Upgrade_Choice == 2:
+            while Allowed == False:
+                Mass = Question(int, '1 Damage per 1 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Player.Damage += Mass
+                    Allowed = True
+                    Player.Points -= Mass
+        elif Upgrade_Choice == 3:
+            while Allowed == False:
+                Mass = Question(int, '1 Damage Bonus per 3 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass*3:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Player.Damage_Bonus += Mass
+                    Allowed = True
+                    Player.Points -= Mass*3
+        elif Upgrade_Choice == 4:
+            while Allowed == False:
+                Mass = Question(int, '1 Crit Chance per 2 XP spent\nHow many would you like to buy', 'i hate you', Text_Time)
+                if Player.Points < Mass*2:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Player.Crit_Chance += Mass
+                    Allowed = True
+                    Player.Points -= Mass*2
+        elif Upgrade_Choice == 5:
+            while Allowed == False:
+                Mass = Question(int, '1 Defense per 2 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass*2:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Player.Defense += Mass
+                    Allowed = True
+                    Player.Points -= Mass*2
+        elif Upgrade_Choice == 6:
+            while Allowed == False:
+                Mass = Question(int, '1 Mana per 2 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass*2:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Prev_Mana = Player.Max_Mana
+                    Player.Max_Mana += Mass*2
+                    Player.Mana = int(round((Player.Mana/Prev_Mana) * Player.Max_Mana))
+                    Allowed = True
+                    Player.Points -= Mass
+        elif Upgrade_Choice == 7:
+            while Allowed == False:
+                Mass = Question(int, '1 Mana regen per 4 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass*4:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Player.Mana_Bonus += Mass
+                    Allowed = True
+                    Player.Points -= Mass*4
+        elif Upgrade_Choice == 8:
+            while Allowed == False:
+                Mass = Question(int, '1 Speed per 1 XP spent\nHow many would you like to buy?: ', 'i hate you', Text_Time)
+                if Player.Points < Mass:
+                    Text_Scroll_Effect('You dont have enough XP', Text_Time)
+                else:
+                    Player.Speed += Mass
+                    Allowed = True
+                    Player.Points -= Mass
+        elif Upgrade_Choice == 9:
+            Investing = False
+        if Player.Points == 0:
+            Investing = False
 
 
 
@@ -189,7 +367,7 @@ for i in range(1): #data in a range loop for space
     Player = Saved_Player()
     Player_Effects = Saved_Status_Effects()
 Clear_Terminal()
-Text_Scroll_Effect("Welcome to Dungeons and Damage (Python Single Player Edition)\nI'm not totally sure what im going for in this game so everything is subject to change but this game is meant to be a replayable campaign that you progress through and level up you character until you reach a final boss so if you want pvp go find that somewhere else", Text_Time)
+Text_Scroll_Effect("Welcome to Dungeons and Damage (Python Single Player Edition)", Text_Time)
 Question(str,'enter anything to continue: ', 'if you get this secret text congrats', Text_Time)
 while(True):
     Clear_Terminal()
@@ -259,7 +437,7 @@ while(True):
             Player = Saved_Player()
         elif Character_Select == 'evil kirk':
             Player = Evil_Knight()
-
+        Player_Effects = Status_Effects()
         Clear_Terminal()
         Campaign = Question(int,'1. Slaying of the king\nWhat Campaign would you like to play?: ', 'whole number', Text_Time)
         if Campaign == 1:
@@ -278,11 +456,19 @@ while(True):
             Traveling = False
             Trader = True
             while Traveling == False:
-                Place_Choice = Question(int, '0. Travel\n1. Search around\n' + Choices_Text + '\nWhat would you like to do?: ', 'Number not decimal or text', Text_Time)
+                Place_Choice = Question(int, '0. Travel\n1. Look at stats and inventory\n2. Use XP points\n3. Search around\n' + Choices_Text + '\nWhat would you like to do?: ', 'Number not decimal or text', Text_Time)
                 if Place_Choice == 0:
                     Traveling = True
                     Area += 1
                 elif Place_Choice == 1:
+                    Text_Scroll_Effect('Health = ' + str(Player.Health) + '/' + str(Player.Max_Health) + ' Mana = ' + str(Player.Mana) + '/' + str(Player.Max_Mana) + ' Mana Regen = ' + str(Player.Mana_Bonus) + ' Damage = ' + str(Player.Damage) + ' Damage Bonus = ' + str(Player.Damage_Bonus) + ' Crit Chance = ' + str(Player.Crit_Chance) + ' Defense = ' + str(Player.Defense) + ' Speed = ' + str(Player.Speed) + ' Ability Cooldown = ' + str(Player.Ability_On_CoolDown), Text_Time)
+
+
+#DO THIS LATER OR NOW ^^^ 
+                elif Place_Choice == 2:
+                    Level_Up(Text_Time)
+
+                elif Place_Choice == 3:
                     Encounter = random.randint(1,30)
                     if Encounter <= 5:
                         Text_Scroll_Effect('You found nothing',Text_Time)
@@ -290,7 +476,7 @@ while(True):
                     elif Encounter <= 10 and Encounter > 5:
                         if Trader == True:
                             Text_Scroll_Effect('You found a merchant open to trading',Text_Time)
-                            Choices_Text = '2. Merchant'
+                            Choices_Text = '4. Merchant'
                         else:
                             Text_Scroll_Effect('You didnt find anything',Text_Time)
                     elif Encounter <= 30 and Encounter > 10:
@@ -314,9 +500,10 @@ while(True):
                                 elif Town == 'Walden':
                                     if Fight_Encounter == 1:
                                         Enemy = Wolf()
+                        Enemy_Effects = Status_Effects()
                         Combat_Normal(Text_Time)
 
-                elif Place_Choice == 2 and Choices_Text == '2. Merchant':
+                elif Place_Choice == 4 and Choices_Text == '4. Merchant':
                     Text_Scroll_Effect('You got no money so why bother even coming here? idiot fr', Text_Time)
             if Area == 2:
                 Midway = data.Maps(2)

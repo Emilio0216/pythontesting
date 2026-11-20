@@ -13,17 +13,19 @@ class Saved_Player:
     Damage_Bonus = 3
     Crit_Chance = 3
     Defense = 10
-    Max_Mana = 3
-    Mana = 3
+    Max_Mana = 5
+    Mana = 5
     Mana_Bonus = 1
     Speed = 2
-    Ability = "Parry"
-    Passive = "Brace"
+    Ability = 1
+    Ability_Active = False
+    Passive = 1
     Armor = 1
     Weapon = 1
     Money = 0
-    Level = 0
+    Level = 5
     Experience = 0
+    Points = 0
 
 class Saved_Status_Effects:
     Advantage = 0 
@@ -49,13 +51,18 @@ class Knight:
     Mana = 5
     Mana_Bonus = 1
     Speed = 2
-    Ability = "Parry"
-    Passive = "Brace"
+    Ability = 1
+    Ability_Active = False
+    Ability_CoolDown = 4
+    Ability_On_CoolDown = 0
+    Passive = 1
     Armor = 1
     Weapon = 1
     Money = 0
     Level = 5
     Experience = 0
+    Points = 0
+
 class Archer:
     Max_Health = 0
     Health = 0
@@ -67,8 +74,8 @@ class Archer:
     Mana = 0
     Mana_Bonus = 0
     Speed = 0
-    Ability = 'None'
-    Passive = 'None'
+    Ability = 6
+    Passive = 4
     Armor = 1
     Weapon = 1
     Money = 0
@@ -85,8 +92,8 @@ class Evil_Knight:
     Mana = 0
     Mana_Bonus = 0
     Speed = 1000
-    Ability = 'Action Surge'
-    Passive = 'Zort Annihialator'
+    Ability = 2
+    Passive = 2
     Armor = 1
     Weapon = 1
     Money = 0
@@ -104,8 +111,8 @@ class Osman:
     Mana = 0
     Mana_Bonus = 1
     Speed = 0
-    Ability = 'Drag'
-    Passive = 'Slippery'
+    Ability = 3
+    Passive = 3
     Armor = 0
     Weapon = 0
     Money = 40
@@ -114,8 +121,9 @@ class Osman:
 #Enemies
 class Wolf:
     Enemy_Type = "Wolf"
+    Mentality = 1
     Max_Health = 8
-    Health = 80
+    Health = 8
     Damage = 4
     Damage_Bonus = 3
     Crit_Chance = 8
@@ -124,13 +132,16 @@ class Wolf:
     Mana = 2
     Mana_Bonus = 1
     Speed = 10
-    Ability = ''
-    Passive = ''
+    Ability = 0
+    Ability_Active = False
+    Ability_CoolDown = 0
+    Ability_On_CoolDown = 0
+    Passive = 0
     Armor = 0
     Weapon = 0
     Money = 4
     Level = 0
-    Experience = 5
+    Experience = 500
 class Turtle:
     Enemy_Type = "Turtle"
     Max_Health = 20
@@ -143,8 +154,8 @@ class Turtle:
     Mana = 0
     Mana_Bonus = 0
     Speed = 1
-    Ability = 'Protect'
-    Passive = ''
+    Ability = 5
+    Passive = 0
     Armor = 0
     Weapon = 0
     Money = 5
